@@ -1,8 +1,9 @@
 import { GlassCard } from "@/components/ui/GlassCard";
 import { prisma } from "@/lib/prisma";
-import { Users, DollarSign, TrendingUp, AlertTriangle, Calendar, RefreshCcw } from "lucide-react";
+import { Users, DollarSign, TrendingUp, AlertTriangle, Calendar, RefreshCcw, Wallet, MousePointer2 } from "lucide-react";
 import { VisitChart } from "@/components/charts/VisitChart";
 import { format } from "date-fns";
+import { StatsCard } from "@/components/dashboard/StatsCard";
 
 export default async function AdminDashboardPage() {
     // Fetch Quick Stats
@@ -49,76 +50,71 @@ export default async function AdminDashboardPage() {
     // ---------------------------------
 
     return (
-        <div className="space-y-6">
-            {/* Analytics Overview Section */}
-            <div>
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-white tracking-tight">Przegląd Analityki</h2>
-                    <div className="flex gap-2">
-                        <div className="flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-md">
-                            <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
-                            <span className="text-[10px] font-bold text-red-500 uppercase tracking-wide">NA ŻYWO • 24H</span>
-                        </div>
-                        <button className="px-3 py-1 bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.08] rounded-md text-xs font-medium text-gray-400 transition-colors flex items-center gap-2">
-                            Dzisiaj <Calendar size={12} />
-                        </button>
-                        <button className="p-1.5 bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.08] rounded-md text-gray-400 transition-colors">
-                            <RefreshCcw size={14} />
-                        </button>
+        <div className="space-y-8">
+            {/* Header / Actions */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-semibold text-white tracking-tight">Przegląd Analityki</h1>
+                    <p className="text-zinc-400 text-sm">Monitoruj stan systemu w czasie rzeczywistym.</p>
+                </div>
+                <div className="flex gap-2">
+                    <div className="flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-md">
+                        <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                        <span className="text-[10px] font-bold text-red-500 uppercase tracking-wide">NA ŻYWO</span>
                     </div>
                 </div>
+            </div>
 
-                <GlassCard className="h-[400px] p-0 flex flex-col relative overflow-hidden group">
-                    {/* Empty state placeholder or actual chart */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#09090B]/80 z-10 pointer-events-none" />
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
-                        <div className="bg-black/80 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 text-xs font-medium text-white shadow-xl">
-                            Interaktywny Wykres Aktywny
+            {/* KPI Section - Using StatsCard */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatsCard
+                    title="Całkowite Zobowiązania"
+                    value={`${totalLiability._sum.walletBalance?.toFixed(2) || '0.00'} PLN`}
+                    icon={<DollarSign className="h-4 w-4 md:h-5 md:w-5 text-emerald-500" />}
+                    trend="up"
+                    trendValue="Live"
+                />
+                <StatsCard
+                    title="Całkowite Kliknięcia"
+                    value={totalVisits.toLocaleString()}
+                    icon={<MousePointer2 className="h-4 w-4 md:h-5 md:w-5 text-blue-500" />}
+                    trend="up"
+                    trendValue="+12%" // Placeholder
+                />
+                <StatsCard
+                    title="Użytkownicy"
+                    value={totalUsers.toString()}
+                    icon={<Users className="h-4 w-4 md:h-5 md:w-5 text-purple-500" />}
+                    trend="up"
+                    trendValue="+5"
+                />
+                <StatsCard
+                    title="Oczekujące Wypłaty"
+                    value={pendingPayouts.toString()}
+                    icon={<AlertTriangle className="h-4 w-4 md:h-5 md:w-5 text-yellow-500" />}
+                    trend={pendingPayouts > 0 ? "down" : "neutral"}
+                    trendValue="Akcja Wymagana"
+                />
+            </div>
+
+            {/* Analytics Chart */}
+            <GlassCard className="h-[400px] p-0 flex flex-col relative overflow-hidden group">
+                <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                    <div>
+                        <h3 className="text-zinc-100 font-semibold text-sm tracking-tight">Ruch Globalny</h3>
+                        <p className="text-xs text-zinc-500">Wizyty vs Kliknięcia Monetarne</p>
+                    </div>
+                </div>
+                <div className="flex-1 w-full p-4 relative z-0">
+                    {chartData.length > 0 ? (
+                        <VisitChart data={chartData} />
+                    ) : (
+                        <div className="h-full flex flex-col items-center justify-center text-center">
+                            <p className="text-zinc-500 text-sm mb-2">Brak danych do wyświetlenia</p>
                         </div>
-                    </div>
-                    <div className="flex-1 w-full p-4 relative z-0">
-                        {chartData.length > 0 ? (
-                            <VisitChart data={chartData} />
-                        ) : (
-                            <div className="h-full flex flex-col items-center justify-center text-center">
-                                <p className="text-gray-500 text-sm mb-2">Zacznij kierować ruch, aby zobaczyć analitykę</p>
-                                <button className="text-xs text-emerald-500 hover:text-emerald-400 underline">Pokaż przewodnik startowy</button>
-                            </div>
-                        )}
-                    </div>
-                </GlassCard>
-            </div>
-
-            {/* Bottom KPI Cards */}
-            <div className="grid gap-4 md:grid-cols-3">
-                <GlassCard gradient className="p-6 relative overflow-hidden group">
-                    <div className="absolute right-4 top-4 opacity-20 group-hover:opacity-40 transition-opacity">
-                        <DollarSign size={40} className="text-emerald-500" />
-                    </div>
-                    <div className="text-sm font-medium text-gray-400 mb-1">Całkowite Zobowiązania</div>
-                    <div className="text-3xl font-black text-white tracking-tight">
-                        {totalLiability._sum.walletBalance?.toFixed(2) || '0.00'} <span className="text-lg text-emerald-500">PLN</span>
-                    </div>
-                    <div className="text-[10px] text-gray-500 mt-2 uppercase tracking-widest font-bold">Zaktualizowano Przed Chwilą</div>
-                </GlassCard>
-
-                <GlassCard className="p-6 relative overflow-hidden group flex flex-col justify-center items-center text-center">
-                    <div className="mb-2 text-gray-500 group-hover:text-emerald-500 transition-colors">
-                        <TrendingUp size={24} />
-                    </div>
-                    <div className="text-3xl font-black text-white mb-1">{totalVisits.toLocaleString()}</div>
-                    <div className="text-[10px] uppercase tracking-widest font-bold text-emerald-500">Całkowite Kliknięcia</div>
-                </GlassCard>
-
-                <GlassCard className="p-6 relative overflow-hidden group flex flex-col justify-center items-center text-center">
-                    <div className="mb-2 text-gray-500 group-hover:text-blue-500 transition-colors relative">
-                        <AlertTriangle size={24} />
-                        {pendingPayouts > 0 && <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />}
-                    </div>
-                    <div className="text-3xl font-black text-white mb-1">{pendingPayouts}</div>
-                    <div className="text-[10px] uppercase tracking-widest font-bold text-gray-500">Oczekujące Wypłaty</div>
-                </GlassCard>
-            </div>
+                    )}
+                </div>
+            </GlassCard>
         </div>
     );
 }

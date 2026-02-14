@@ -32,39 +32,59 @@ export default async function RewardsPage() {
         : 100;
 
     return (
-        <div className="space-y-8 max-w-6xl mx-auto">
-            {/* Header & Stats */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
-                        <Trophy className="text-yellow-500" />
-                        Nagrody za Osiągnięcia
-                    </h1>
-                    <p className="text-gray-400 mt-1">Odblokuj ekskluzywne nagrody, osiągając kamienie milowe zarobków.</p>
-                </div>
-                <div className="text-right">
-                    <div className="text-sm text-gray-400 uppercase tracking-widest font-bold">Całkowite Zarobki</div>
-                    <div className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600">
-                        {lifetimeEarnings.toFixed(2)} PLN
-                    </div>
-                </div>
-            </div>
+        <div className="space-y-8 max-w-6xl mx-auto pb-20">
+            {/* Hero Section */}
+            <div className="relative rounded-3xl overflow-hidden p-8 md:p-12 border border-white/10 shadow-2xl bg-zinc-900/50 backdrop-blur-md">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-purple-500/10" />
 
-            {/* Progress Bar */}
-            {nextReward && (
-                <GlassCard className="p-6 relative overflow-hidden">
-                    <div className="flex justify-between text-sm font-medium mb-2">
-                        <span className="text-emerald-400">Aktualnie: {lifetimeEarnings.toFixed(0)} PLN</span>
-                        <span className="text-gray-400">Następny Cel: {nextReward.threshold.toFixed(0)} PLN ({nextReward.name})</span>
+                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div className="space-y-4 max-w-lg">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-xs font-bold uppercase tracking-wider">
+                            <Trophy size={14} />
+                            Program Lojalnościowy
+                        </div>
+                        <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
+                            Twoje Osiągnięcia
+                        </h1>
+                        <p className="text-lg text-zinc-400">
+                            Zarabiaj na skracaniu linków i odbieraj ekskluzywne nagrody. Każda złotówka przybliża Cię do celu.
+                        </p>
                     </div>
-                    <div className="h-4 bg-gray-800 rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(16,185,129,0.5)]"
-                            style={{ width: `${progressPercent}%` }}
-                        />
+
+                    <div className="bg-black/40 border border-white/5 rounded-2xl p-6 text-center min-w-[280px] shadow-xl backdrop-blur-sm">
+                        <div className="text-xs text-zinc-500 uppercase tracking-widest font-bold mb-2">Całkowite Zarobki</div>
+                        <div className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 drop-shadow-sm">
+                            {lifetimeEarnings.toFixed(2)} <span className="text-2xl text-zinc-500">PLN</span>
+                        </div>
                     </div>
-                </GlassCard>
-            )}
+                </div>
+
+                {/* Main Progress Bar */}
+                {nextReward && (
+                    <div className="mt-12 relative z-10">
+                        <div className="flex justify-between items-end mb-3">
+                            <div>
+                                <div className="text-sm font-bold text-white mb-1">Następny Cel: {nextReward.name}</div>
+                                <div className="text-xs text-zinc-400">Brakuje tylko <span className="text-emerald-400 font-mono">{(nextReward.threshold - lifetimeEarnings).toFixed(2)} PLN</span></div>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-2xl font-bold text-white">{progressPercent.toFixed(1)}%</div>
+                            </div>
+                        </div>
+                        <div className="h-6 bg-black/50 rounded-full overflow-hidden border border-white/5 relative">
+                            {/* Milestones indicators can go here if we had their exact positions relative to this bar, 
+                                 but for a single "next reward" bar, a simple fill is cleaner. 
+                             */}
+                            <div
+                                className="h-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-cyan-400 shadow-[0_0_20px_rgba(16,185,129,0.4)] relative overflow-hidden"
+                                style={{ width: `${progressPercent}%` }}
+                            >
+                                <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]" style={{ transform: 'skewX(-20deg)' }}></div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* Rewards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -74,37 +94,54 @@ export default async function RewardsPage() {
                     const isClaimed = !!claimed;
 
                     return (
-                        <GlassCard
+                        <div
                             key={reward.id}
-                            className={`p-6 flex flex-col h-full ${!isUnlocked && 'opacity-60 grayscale-[0.5]'}`}
+                            className={`group relative p-6 flex flex-col h-full rounded-2xl border transition-all duration-300 ${isUnlocked
+                                    ? 'bg-zinc-900/40 border-white/10 hover:border-emerald-500/30 hover:bg-zinc-900/60 shadow-lg hover:shadow-emerald-500/10'
+                                    : 'bg-zinc-900/20 border-white/5 opacity-75'
+                                }`}
                         >
-                            <div className="flex justify-between items-start mb-4">
-                                <div className={`p-3 rounded-xl ${isUnlocked ? 'bg-emerald-500/10 text-emerald-500' : 'bg-gray-800 text-gray-500'}`}>
-                                    {isClaimed ? <CheckCircle size={24} /> : isUnlocked ? <Gift size={24} /> : <Lock size={24} />}
+                            {/* Background Glow for Unlocked */}
+                            {isUnlocked && <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-purple-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />}
+
+                            <div className="relative z-10 flex justify-between items-start mb-6">
+                                <div className={`p-4 rounded-xl shadow-inner ${isClaimed ? 'bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.4)]' :
+                                        isUnlocked ? 'bg-zinc-800 text-emerald-400 border border-emerald-500/20' :
+                                            'bg-zinc-800/50 text-zinc-600 border border-white/5'
+                                    }`}>
+                                    {isClaimed ? <CheckCircle size={28} /> : isUnlocked ? <Gift size={28} /> : <Lock size={28} />}
                                 </div>
-                                <div className="text-xs font-bold px-2 py-1 rounded bg-white/5 border border-white/10 uppercase tracking-wider">
+                                <div className={`text-xs font-bold px-3 py-1.5 rounded-lg border uppercase tracking-wider ${isUnlocked ? 'bg-white/5 text-white border-white/10' : 'bg-black/20 text-zinc-600 border-white/5'
+                                    }`}>
                                     {reward.threshold} PLN
                                 </div>
                             </div>
 
-                            <h3 className="text-xl font-bold text-white mb-2">{reward.name}</h3>
-                            <p className="text-sm text-gray-400 mb-6 flex-grow">{reward.description}</p>
+                            <div className="relative z-10 mb-6">
+                                <h3 className={`text-xl font-bold mb-2 group-hover:text-emerald-400 transition-colors ${isUnlocked ? 'text-white' : 'text-zinc-500'}`}>
+                                    {reward.name}
+                                </h3>
+                                <p className="text-sm text-zinc-400 leading-relaxed">
+                                    {reward.description}
+                                </p>
+                            </div>
 
-                            <div className="mt-auto">
+                            <div className="relative z-10 mt-auto">
                                 {isClaimed ? (
-                                    <div className="w-full py-3 rounded-xl bg-gray-800/50 border border-white/5 text-center text-sm font-bold text-gray-300 flex items-center justify-center gap-2">
-                                        {claimed.status === 'SHIPPED' ? <Truck size={16} className="text-emerald-500" /> : <CheckCircle size={16} />}
-                                        STATUS: {claimed.status}
+                                    <div className="w-full py-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center font-bold text-emerald-400 flex items-center justify-center gap-2">
+                                        {claimed.status === 'SHIPPED' ? <Truck size={18} /> : <CheckCircle size={18} />}
+                                        <span className="text-xs uppercase tracking-wider">{claimed.status === 'SHIPPED' ? 'WYSŁANO' : 'ODEBRANO'}</span>
                                     </div>
                                 ) : isUnlocked ? (
                                     <ClaimRewardButton reward={reward} />
                                 ) : (
-                                    <button disabled className="w-full py-3 rounded-xl bg-gray-800 text-gray-500 font-bold cursor-not-allowed">
-                                        ZABLOKOWANE
-                                    </button>
+                                    <div className="w-full py-4 rounded-xl bg-zinc-800/50 border border-white/5 text-center text-zinc-600 font-bold text-xs uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2">
+                                        <Lock size={14} />
+                                        Zablokowane
+                                    </div>
                                 )}
                             </div>
-                        </GlassCard>
+                        </div>
                     );
                 })}
             </div>

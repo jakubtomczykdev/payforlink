@@ -19,64 +19,66 @@ export default async function AdminUsersPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between mb-2">
                 <div>
-                    <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-                        Zarządzanie Użytkownikami <span className="text-gray-600 text-lg font-normal">/</span> <span className="text-gray-400 text-base font-normal">Lista</span>
+                    <h1 className="text-xl font-semibold text-white tracking-tight flex items-center gap-2">
+                        Lista Użytkowników
                     </h1>
-                    <p className="text-xs text-gray-500 mt-1">Zarządzaj kontami, uprawnieniami i statusem.</p>
+                    <p className="text-zinc-400 text-sm">Zarządzaj kontami, uprawnieniami i statusem.</p>
                 </div>
                 <div className="flex gap-2">
-                    <button className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold uppercase tracking-widest rounded-lg transition-colors shadow-lg shadow-emerald-500/20">
+                    <button className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 text-xs font-bold uppercase tracking-wider rounded-lg transition-colors border border-emerald-500/20">
                         Dodaj Użytkownika
                     </button>
                 </div>
             </div>
 
-            <div className="grid gap-3">
-                {users.map((user: any) => (
-                    <GlassCard key={user.id} className="p-4 flex items-center justify-between group hover:bg-[#09090B]/80 hover:border-white/20 transition-all border-white/5 bg-[#09090B]/40">
-                        <div className="flex items-center gap-4">
-                            <div className={`h-10 w-10 rounded-xl flex items-center justify-center border font-bold text-sm ${user.role === 'ADMIN'
-                                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                                : 'bg-white/5 text-gray-400 border-white/10'
-                                }`}>
-                                {user.role === 'ADMIN' ? 'AD' : user.email.substring(0, 2).toUpperCase()}
+            <GlassCard className="p-0 overflow-hidden">
+                <div className="grid grid-cols-12 gap-4 px-6 py-3 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider bg-white/[0.02] border-b border-white/5">
+                    <div className="col-span-5">Użytkownik</div>
+                    <div className="col-span-2 text-right hidden md:block">Linki</div>
+                    <div className="col-span-3 text-right hidden md:block">Saldo</div>
+                    <div className="col-span-2 text-right">Akcje</div>
+                </div>
+
+                <div className="divide-y divide-white/5">
+                    {users.map((user: any) => (
+                        <div key={user.id} className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-white/[0.02] transition-colors group">
+                            <div className="col-span-5 flex items-center gap-3">
+                                <div className={`h-8 w-8 rounded-lg flex items-center justify-center font-bold text-xs ${user.role === 'ADMIN'
+                                    ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                                    : 'bg-zinc-800 text-zinc-400 border border-white/5'
+                                    }`}>
+                                    {user.role === 'ADMIN' ? 'AD' : user.email.substring(0, 1).toUpperCase()}
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="font-medium text-zinc-200 text-sm truncate flex items-center gap-2">
+                                        {user.email}
+                                        {user.isBanned && (
+                                            <span className="text-[9px] bg-red-500/20 text-red-500 px-1.5 py-0.5 rounded border border-red-500/20 font-bold">BAN</span>
+                                        )}
+                                    </div>
+                                    <div className="text-xs text-zinc-500 truncate">
+                                        ID: {user.id.substring(0, 8)}...
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <div className="font-bold text-white text-sm flex items-center gap-2">
-                                    {user.email}
-                                    {user.isBanned && (
-                                        <span className="text-[9px] bg-red-500/20 text-red-500 px-1.5 py-0.5 rounded border border-red-500/20 font-black tracking-wider">ZBANOWANY</span>
-                                    )}
-                                </div>
-                                <div className="text-[10px] text-gray-500 font-mono mt-0.5 flex items-center gap-2">
-                                    ID: {user.id.substring(0, 8)}... • Dołączył {formatDistanceToNow(user.createdAt, { addSuffix: true, locale: pl })}
-                                </div>
+
+                            <div className="col-span-2 text-right hidden md:block">
+                                <span className="text-sm font-mono text-zinc-400">{user._count.links}</span>
+                            </div>
+
+                            <div className="col-span-3 text-right hidden md:block">
+                                <span className="text-sm font-mono text-emerald-500 font-medium">{user.walletBalance.toFixed(2)} PLN</span>
+                            </div>
+
+                            <div className="col-span-2 flex items-center justify-end gap-2">
+                                <Link href={`/admin/users/${user.id}`} className="p-2 text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                                    <ChevronRight size={16} />
+                                </Link>
                             </div>
                         </div>
-
-                        <div className="flex items-center gap-8">
-                            <div className="hidden md:block text-right">
-                                <div className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-0.5">Linków</div>
-                                <div className="text-sm font-bold text-white">{user._count.links}</div>
-                            </div>
-
-                            <div className="hidden md:block text-right">
-                                <div className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-0.5">Saldo</div>
-                                <div className="text-sm font-bold text-emerald-400">{user.walletBalance.toFixed(2)} {user.currency}</div>
-                            </div>
-
-                            <div className="flex items-center gap-2 pl-4 border-l border-white/5">
-                                <Link href={`/admin/users/${user.id}/quality`} className="p-2 text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-colors" title="Raport Jakości">
-                                    <Activity size={18} />
-                                </Link>
-                                <Link href={`/admin/users/${user.id}`} className="group/btn flex items-center gap-1 pl-3 pr-2 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-medium text-white transition-all">
-                                    Szczegóły <ChevronRight size={14} className="text-gray-500 group-hover/btn:text-white transition-colors" />
-                                </Link>
-                            </div>
-                        </div>
-                    </GlassCard>
-                ))}
-            </div>
+                    ))}
+                </div>
+            </GlassCard>
         </div>
     );
 }

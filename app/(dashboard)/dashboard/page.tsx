@@ -10,6 +10,7 @@ import { StatsCard } from "@/components/dashboard/StatsCard";
 import { VisitChart } from "@/components/charts/VisitChart"; // Keeping chart for now as it adds value
 import { QuickShortener } from "@/components/dashboard/QuickShortener";
 import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
+import { RecentLinks } from "@/components/dashboard/RecentLinks";
 
 export const dynamic = "force-dynamic";
 
@@ -155,55 +156,14 @@ export default async function DashboardPage() {
                 </div>
 
                 {/* Main Content (Chart + Links) */}
-                <div className="order-1 lg:order-2 lg:col-span-2 space-y-6">
+                <div className="order-1 lg:order-2 lg:col-span-2 space-y-6 min-w-0">
                     {/* Functional Line Chart */}
                     <div className="h-[300px] md:h-[400px]">
                         <VisitChart data={chartData} />
                     </div>
 
                     {/* Recent Links */}
-                    <div className="bg-zinc-900/40 backdrop-blur-md rounded-2xl border border-white/5 overflow-hidden shadow-xl">
-                        <div className="flex items-center justify-between p-5 border-b border-white/5">
-                            <h2 className="text-sm font-semibold text-zinc-100">Ostatnie Linki</h2>
-                            <Link href="/dashboard/create">
-                                <button className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 text-xs font-bold rounded-lg transition-all shadow-sm">
-                                    <Plus size={16} />
-                                    Nowy Link
-                                </button>
-                            </Link>
-                        </div>
-                        <div className="p-0">
-                            {user.links.length > 0 ? (
-                                <div className="w-full">
-                                    <div className="grid grid-cols-12 gap-4 px-5 py-3 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider bg-white/[0.02] border-b border-white/5">
-                                        <div className="col-span-6">Link</div>
-                                        <div className="col-span-3 text-right">Wizyty</div>
-                                        <div className="col-span-3 text-right">Zarobiono</div>
-                                    </div>
-                                    {user.links.slice(0, 5).map((link) => (
-                                        <div key={link.id} className="grid grid-cols-12 gap-4 px-5 py-4 border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors items-center text-sm">
-                                            <div className="col-span-6 min-w-0">
-                                                <div className="font-medium text-zinc-200 truncate hover:text-emerald-500 transition-colors cursor-pointer">
-                                                    /{link.shortCode}
-                                                </div>
-                                                <div className="text-zinc-500 text-xs truncate mt-0.5">{link.originalUrl}</div>
-                                            </div>
-                                            <div className="col-span-3 text-right font-mono text-zinc-300">
-                                                {link.totalVisits}
-                                            </div>
-                                            <div className="col-span-3 text-right font-mono font-medium text-emerald-500">
-                                                {(link.totalVisits * 0.01).toFixed(2)} PLN
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="py-12 text-center text-zinc-500">
-                                    No links found. Create one to get started!
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    <RecentLinks links={user.links.slice(0, 5)} />
                 </div>
 
                 {/* Sidebar (New) */}

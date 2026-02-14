@@ -1,8 +1,9 @@
 import { GlassCard } from "@/components/ui/GlassCard";
 import { prisma } from "@/lib/prisma";
-import { ShieldAlert, User, Trash2, ArrowRight } from "lucide-react";
+import { ShieldAlert, User, Trash2, ArrowRight, Activity, Users } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+import { StatsCard } from "@/components/dashboard/StatsCard";
 
 export default async function FraudReportsPage() {
     // Basic heuristics for "Suspicious Users"
@@ -44,59 +45,89 @@ export default async function FraudReportsPage() {
         };
     }).filter(u => u.isFlagged).sort((a, b) => b.proxyRate - a.proxyRate);
 
+    // Calculate aggregate stats
+    const totalFlagged = flaggedUsers.length;
+    const avgProxyRate = totalFlagged > 0 ? flaggedUsers.reduce((acc, u) => acc + u.proxyRate, 0) / totalFlagged : 0;
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between mb-4">
                 <div>
-                    <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                    <h1 className="text-xl font-semibold text-white tracking-tight flex items-center gap-2">
                         Wykrywanie Oszustw
-                        <span className="px-2 py-0.5 rounded-md bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-wider border border-red-500/20">BEZPIECZEŃSTWO</span>
+                        <span className="px-2 py-0.5 rounded-md bg-red-500/10 text-red-500 text-[10px] font-bold uppercase tracking-wider border border-red-500/20">BEZPIECZEŃSTWO</span>
                     </h1>
-                    <p className="text-xs text-gray-500 mt-1">Analiza heurystyczna ruchu i oznaczanie użytkowników.</p>
+                    <p className="text-zinc-400 text-sm">Analiza heurystyczna ruchu i oznaczanie użytkowników.</p>
                 </div>
                 <div className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20 uppercase tracking-widest flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Ochrona na żywo
                 </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <StatsCard
+                    title="Oznaczeni Użytkownicy"
+                    value={totalFlagged.toString()}
+                    icon={<ShieldAlert className="h-5 w-5 text-red-500" />}
+                    trend={totalFlagged > 0 ? "down" : "neutral"}
+                    trendValue="Wymagana Akcja"
+                />
+                <StatsCard
+                    title="Śr. Wskaźnik Proxy"
+                    value={`${avgProxyRate.toFixed(1)}%`}
+                    icon={<Activity className="h-5 w-5 text-orange-500" />}
+                    trend="neutral"
+                    trendValue="Flagged Group"
+                />
+                <StatsCard
+                    title="Monitorowane Konta"
+                    value={allUsers.length.toString()}
+                    icon={<Users className="h-5 w-5 text-blue-500" />}
+                    trend="neutral"
+                    trendValue="Total"
+                />
+            </div>
+
             {flaggedUsers.length === 0 ? (
-                <GlassCard className="p-12 text-center text-gray-500 border-emerald-500/20">
-                    <div className="h-16 w-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <GlassCard className="p-12 text-center text-zinc-500 border-dashed border-white/5 bg-transparent">
+                    <div className="h-16 w-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/20">
                         <ShieldAlert className="text-emerald-500" size={32} />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2">System Czysty</h3>
-                    <p>W obecnej próbce nie wykryto wysoce podejrzanej aktywności.</p>
+                    <h3 className="text-xl font-bold text-white mb-2 tracking-tight">System Czysty</h3>
+                    <p className="text-sm">W obecnej próbce nie wykryto wysoce podejrzanej aktywności.</p>
                 </GlassCard>
             ) : (
                 <div className="grid gap-4">
                     {flaggedUsers.map(user => (
-                        <GlassCard key={user.id} className="p-6 border-red-500/20 hover:bg-red-500/5 transition-all group">
+                        <GlassCard key={user.id} className="p-6 border-l-4 border-l-red-500/50 hover:bg-white/[0.02] transition-all group">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                                 <div className="flex items-center gap-4">
-                                    <div className="h-12 w-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 font-bold border border-red-500/20">
+                                    <div className="h-12 w-12 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500 font-bold border border-red-500/20 text-lg">
                                         {user.email[0].toUpperCase()}
                                     </div>
                                     <div>
                                         <div className="font-bold text-white flex items-center gap-2">
                                             {user.email}
-                                            <span className="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded font-black tracking-tighter">PODEJRZANY</span>
+                                            <span className="text-[10px] bg-red-500/20 text-red-500 border border-red-500/20 px-1.5 py-0.5 rounded font-bold tracking-wider">PODEJRZANY</span>
                                         </div>
-                                        <div className="text-sm text-gray-400 mt-0.5">
-                                            Dołączył {format(user.createdAt, 'dd.MM.yyyy')} • {user.totalVisits} próbkowanych zdarzeń
+                                        <div className="text-xs text-zinc-500 mt-1 flex items-center gap-2">
+                                            Dołączył {format(user.createdAt, 'dd.MM.yyyy')}
+                                            <span className="text-zinc-700">•</span>
+                                            {user.totalVisits} próbkowanych zdarzeń
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-8 md:gap-12">
                                     <div>
-                                        <div className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1">Wskaźnik Proxy</div>
-                                        <div className={`text-xl font-mono font-bold ${user.proxyRate > 50 ? 'text-red-500' : 'text-orange-500'}`}>
+                                        <div className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mb-1">Wskaźnik Proxy</div>
+                                        <div className={`text-xl font-bold tracking-tight ${user.proxyRate > 50 ? 'text-red-500' : 'text-orange-500'}`}>
                                             {user.proxyRate.toFixed(1)}%
                                         </div>
                                     </div>
                                     <div>
-                                        <div className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1">Ruch Niezbędny</div>
-                                        <div className="text-xl font-mono font-bold text-gray-300">
+                                        <div className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mb-1">Ruch Niezbędny</div>
+                                        <div className="text-xl font-bold tracking-tight text-zinc-300">
                                             {user.lowQualityRate.toFixed(1)}%
                                         </div>
                                     </div>
@@ -105,16 +136,16 @@ export default async function FraudReportsPage() {
                                 <div className="flex gap-2">
                                     <Link
                                         href={`/admin/users/${user.id}`}
-                                        className="p-2.5 bg-white/5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors border border-white/10"
+                                        className="p-2.5 bg-zinc-800/50 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors border border-white/5"
                                         title="Szczegóły Użytkownika"
                                     >
                                         <User size={20} />
                                     </Link>
                                     <Link
                                         href={`/admin/users/${user.id}/quality`}
-                                        className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-lg text-sm font-bold transition-all border border-white/10 group-hover:bg-emerald-500 group-hover:text-black group-hover:border-emerald-500"
+                                        className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border border-red-500/20"
                                     >
-                                        Zbadaj Ruch <ArrowRight size={16} />
+                                        Zbadaj Ruch <ArrowRight size={14} />
                                     </Link>
                                 </div>
                             </div>
@@ -123,9 +154,11 @@ export default async function FraudReportsPage() {
                 </div>
             )}
 
-            <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                <p className="text-xs text-yellow-500 flex items-center gap-2 font-medium">
-                    <ShieldAlert size={14} /> Heurystyka opiera się obecnie na próbce ostatnich 100 wizyt na użytkownika. To jest system wczesnego ostrzegania.
+            <div className="p-4 bg-yellow-500/5 border border-yellow-500/10 rounded-lg flex items-start gap-3">
+                <ShieldAlert size={16} className="text-yellow-500 mt-0.5" />
+                <p className="text-xs text-yellow-500/80 font-medium leading-relaxed">
+                    Heurystyka opiera się obecnie na próbce ostatnich 100 wizyt na użytkownika. To jest system wczesnego ostrzegania.
+                    Decyzje o blokadzie powinny być podejmowane po manualnej weryfikacji w panelu użytkownika.
                 </p>
             </div>
         </div>

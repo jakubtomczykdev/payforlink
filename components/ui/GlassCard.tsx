@@ -9,9 +9,10 @@ export function GlassCard({ children, className, gradient = false, ...props }: G
     return (
         <div
             className={cn(
-                "relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#09090B]/60 backdrop-blur-2xl transition-all duration-300 shadow-xl",
-                gradient && "bg-gradient-to-br from-emerald-500/[0.08] to-transparent border-emerald-500/10",
-                "hover:border-white/[0.15] hover:bg-[#09090B]/80",
+                // Matching BentoCard style from Dashboard
+                "relative overflow-hidden rounded-3xl border border-white/5 bg-zinc-900/80 backdrop-blur-xl transition-all duration-300 shadow-2xl",
+                gradient && "bg-gradient-to-br from-emerald-500/[0.05] to-zinc-900/80 border-emerald-500/10",
+                "hover:bg-zinc-900/90 hover:border-white/10",
                 className
             )}
             {...props}

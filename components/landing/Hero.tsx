@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight, CheckCircle2, TrendingUp, ShieldCheck, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 
