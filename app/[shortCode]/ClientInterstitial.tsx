@@ -116,7 +116,7 @@ export default function ClientInterstitial({ shortCode, mode, cpaOfferUrl }: Pro
                 {/* Main Content Area */}
                 <div className="min-h-[200px] flex flex-col items-center justify-center relative">
 
-                    {!canProceed && mode !== 'PLUS' && mode !== 'NSFW' && (
+                    {!canProceed && mode === 'STANDARD' && (
                         <div className="relative w-40 h-40 flex items-center justify-center">
                             {/* Neon Ring */}
                             <div className="absolute inset-0 rounded-full border-4 border-gray-800" />
