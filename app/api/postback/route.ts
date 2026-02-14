@@ -46,7 +46,9 @@ export async function GET(request: NextRequest) {
         const link = await prisma.link.findUnique({ where: { shortCode } });
         if (!link) return NextResponse.json({ error: 'Link not found' }, { status: 404 });
 
-        // Build transaction queries
+        // Create Notification with Debug Info
+        const debugInfo = `(Debug: userId=${userId}, shortCode=${shortCode}, token=${visitToken || 'NULL'}, sub1=${searchParams.get('sub1')}, sub2=${searchParams.get('sub2')}, sub3=${searchParams.get('sub3')}, sub5=${searchParams.get('sub5')})`;
+
         const queries: any[] = [
             // Update User Wallet
             prisma.user.update({
@@ -68,8 +70,8 @@ export async function GET(request: NextRequest) {
                 data: {
                     userId,
                     type: 'BONUS',
-                    title: 'Nowe Środki (CPA)',
-                    message: `Otrzymałeś ${payout} ${currency} z linku /${shortCode} (Zadanie wykonane).`,
+                    title: 'Nowe Środki (CPA) - Debug',
+                    message: `Otrzymałeś ${payout} ${currency} z linku /${shortCode}. ${debugInfo}`,
                     isRead: false
                 }
             })
