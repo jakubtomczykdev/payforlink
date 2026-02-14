@@ -1,4 +1,6 @@
-// ... imports
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import { AdminLayoutShell } from "@/components/admin/AdminLayoutShell";
 
 export default async function AdminLayout({
