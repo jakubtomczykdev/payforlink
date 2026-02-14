@@ -35,6 +35,25 @@ export async function GET(request: NextRequest) {
 
     // 2. Validate
     if (!userId || !shortCode || payout <= 0) {
+        // DEBUG: Try to notify the user if we at least have a userId
+        if (userId) {
+            try {
+                const userExists = await prisma.user.findUnique({ where: { id: userId } });
+                if (userExists) {
+                    await prisma.notification.create({
+                        data: {
+                            userId,
+                            type: 'SYSTEM',
+                            title: 'Postback Error (Debug)',
+                            message: `Otrzymano Postback, ale brakuje danych. Params: ${JSON.stringify(Object.fromEntries(searchParams))}. UserId: ${userId}, ShortCode: ${shortCode}, Payout: ${payout}`,
+                            isRead: false
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error("Failed to send debug notification", e);
+            }
+        }
         return NextResponse.json({ error: 'Invalid parameters', params: Object.fromEntries(searchParams) }, { status: 400 });
     }
 

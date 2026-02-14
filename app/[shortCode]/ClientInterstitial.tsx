@@ -15,6 +15,7 @@ export default function ClientInterstitial({ shortCode, mode, cpaOfferUrl }: Pro
     const [canProceed, setCanProceed] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isLocked, setIsLocked] = useState(false); // For NSFW waiting state
+    const [visitToken, setVisitToken] = useState<string | null>(null);
 
     // Timer Logic
     useEffect(() => {
@@ -64,6 +65,7 @@ export default function ClientInterstitial({ shortCode, mode, cpaOfferUrl }: Pro
         }
 
         const token = result.unlockToken;
+        setVisitToken(token);
 
         // 2. Prepare Offer URL with Token (sub3)
         // Check if cpaOfferUrl already has query params
@@ -220,6 +222,19 @@ export default function ClientInterstitial({ shortCode, mode, cpaOfferUrl }: Pro
                             <p className="text-xs text-gray-500 mt-2 max-w-[200px]">
                                 Nie zamykaj tej karty. Po potwierdzeniu pełnoletności (wykonaniu oferty), zostaniesz przekierowany automatycznie.
                             </p>
+
+                            {/* DEBUG HELPER FOR USER */}
+                            <div className="mt-8 p-4 bg-black/50 rounded border border-gray-800 text-left w-full overflow-hidden">
+                                <p className="text-[10px] text-gray-500 font-mono mb-2">DEBUG / MANUAL TEST LINK:</p>
+                                <div className="text-[10px] text-gray-400 font-mono break-all select-all bg-gray-900 p-2 rounded cursor-text">
+                                    {(() => {
+                                        const userIdMatch = cpaOfferUrl.match(/sub1=([^&]+)/);
+                                        const userId = userIdMatch ? userIdMatch[1] : 'UNKNOWN_USER';
+                                        return `https://payforlink.onrender.com/api/postback?userId=${userId}&shortCode=${shortCode}&visitToken=${visitToken}&payout=2.50&currency=PLN&status=approved`;
+                                    })()}
+                                </div>
+                                <p className="text-[10px] text-gray-600 mt-1">Skopiuj powyższy link i otwórz w nowej karcie, aby symulować wykonanie zadania.</p>
+                            </div>
                         </div>
                     )}
 
