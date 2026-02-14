@@ -15,6 +15,7 @@ export default function ClientInterstitial({ shortCode, mode, cpaOfferUrl }: Pro
     const [canProceed, setCanProceed] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isLocked, setIsLocked] = useState(false); // For NSFW waiting state
+    const [isUnlockedSuccess, setIsUnlockedSuccess] = useState(false); // New state for successful unlock
     const [visitToken, setVisitToken] = useState<string | null>(null);
 
     // Timer Logic
@@ -87,11 +88,10 @@ export default function ClientInterstitial({ shortCode, mode, cpaOfferUrl }: Pro
                     const data = await res.json();
                     if (data.unlocked) {
                         clearInterval(pollInterval);
-                        // 5. Redirect to Final URL on Unlock
-                        // We need to fetch the final URL again or reuse if we had it (we don't for security, fetching now)
-                        // Actually, we can just call verifyAndRedirect or getDestinationUrl.
-                        // Since verifyAndRedirect redirects server-side, it might not work well in interval.
-                        // Better to fetch URL and redirect client-side.
+
+                        setIsUnlockedSuccess(true);
+
+                        // 5. Try Auto-Redirect
                         const finalUrl = await getDestinationUrl(shortCode);
                         if (finalUrl) {
                             window.location.href = finalUrl;
@@ -210,7 +210,7 @@ export default function ClientInterstitial({ shortCode, mode, cpaOfferUrl }: Pro
                         </div>
                     )}
 
-                    {mode === 'NSFW' && isLocked && (
+                    {mode === 'NSFW' && isLocked && !isUnlockedSuccess && (
                         <div className="w-full animate-in fade-in zoom-in duration-500 flex flex-col items-center">
                             <div className="relative w-16 h-16 mb-4">
                                 <div className="absolute inset-0 rounded-full border-4 border-red-900/30" />
@@ -222,19 +222,27 @@ export default function ClientInterstitial({ shortCode, mode, cpaOfferUrl }: Pro
                             <p className="text-xs text-gray-500 mt-2 max-w-[200px]">
                                 Nie zamykaj tej karty. Po potwierdzeniu pełnoletności (wykonaniu oferty), zostaniesz przekierowany automatycznie.
                             </p>
+                        </div>
+                    )}
 
-                            {/* DEBUG HELPER FOR USER */}
-                            <div className="mt-8 p-4 bg-black/50 rounded border border-gray-800 text-left w-full overflow-hidden">
-                                <p className="text-[10px] text-gray-500 font-mono mb-2">DEBUG / MANUAL TEST LINK:</p>
-                                <div className="text-[10px] text-gray-400 font-mono break-all select-all bg-gray-900 p-2 rounded cursor-text">
-                                    {(() => {
-                                        const userIdMatch = cpaOfferUrl.match(/sub1=([^&]+)/);
-                                        const userId = userIdMatch ? userIdMatch[1] : 'UNKNOWN_USER';
-                                        return `https://payforlink.onrender.com/api/postback?userId=${userId}&shortCode=${shortCode}&visitToken=${visitToken}&payout=2.50&currency=PLN&status=approved`;
-                                    })()}
-                                </div>
-                                <p className="text-[10px] text-gray-600 mt-1">Skopiuj powyższy link i otwórz w nowej karcie, aby symulować wykonanie zadania.</p>
+                    {mode === 'NSFW' && isUnlockedSuccess && (
+                        <div className="w-full animate-in fade-in zoom-in duration-500 flex flex-col items-center">
+                            <div className="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
                             </div>
+                            <p className="text-lg text-emerald-400 font-bold mb-4">WERYFIKACJA ZAKOŃCZONA!</p>
+                            <Button
+                                onClick={async () => {
+                                    const finalUrl = await getDestinationUrl(shortCode);
+                                    if (finalUrl) window.location.href = finalUrl;
+                                    else alert('Błąd pobierania linku. Odśwież stronę.');
+                                }}
+                                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-14 rounded-xl shadow-[0_0_30px_rgba(16,185,129,0.4)] animate-bounce"
+                            >
+                                PRZEJDŹ DO STRONY
+                            </Button>
                         </div>
                     )}
 
