@@ -8,87 +8,63 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  
-  // Wallet
-  walletBalance Float     @default(0.0)
-  lifetimeEarnings Float  @default(0.0) // For simple milestone tracking
-  currency      String    @default("PLN")
-  role          UserRole  @default(USER)
-  
-  // Monetization Settings
-  monetizationMode MonetizationMode @default(STANDARD)
-  customCpmRate    Decimal?         @db.Decimal(10, 2) // Optional override rate
-
-  // Payment Details
-  bankAccount   String?   // IBAN
-  usdtAddress   String?   // TRC20/ERC20 Address
-  preferredPayoutMethod String? // "BANK" or "USDT"
-  
-  // Onboarding & Business Info
-  onboardingCompleted Boolean @default(false)
-  referralSource      String? // How did they find us?
-  predictedTraffic    String? // Expected volume
-  socialMediaLinks    String? // JSON string of specific platforms
-
-  // Admin Flags
-  isBanned      Boolean   @default(false)
-  banReason     String?   // Reason for ban (e.g. "AI: Excessive VPN")
-
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  links         Link[]
-  payouts       Payout[]
-  rewards       UserReward[]
-  notifications Notification[]
+  id                    String           @id @default(cuid())
+  email                 String           @unique
+  name                  String?
+  walletBalance         Float            @default(0.0)
+  currency              String           @default("PLN")
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  role                  UserRole         @default(USER)
+  bankAccount           String?
+  preferredPayoutMethod String?
+  usdtAddress           String?
+  isBanned              Boolean          @default(false)
+  banReason             String?
+  emailVerified         DateTime?
+  image                 String?
+  onboardingCompleted   Boolean          @default(false)
+  predictedTraffic      String?
+  referralSource        String?
+  socialMediaLinks      String?
+  customCpmRate         Decimal?         @db.Decimal(10, 2)
+  monetizationMode      MonetizationMode @default(STANDARD)
+  lifetimeEarnings      Float            @default(0.0)
+  accounts              Account[]
+  links                 Link[]
+  notifications         Notification[]
+  payouts               Payout[]
+  sessions              Session[]
+  rewards               UserReward[]
 }
 
 model Reward {
-  id          String   @id @default(cuid())
-  slug        String   @unique // e.g., "tshirt-200"
-  name        String   // e.g., "Official T-Shirt"
-  threshold   Float    // e.g., 200.0
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  name        String
+  threshold   Float
   description String?
-  image       String?  // URL to image
-  isActive    Boolean  @default(true)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  image       String?
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   userRewards UserReward[]
 }
 
 model UserReward {
   id              String       @id @default(cuid())
   userId          String
-  user            User         @relation(fields: [userId], references: [id])
   rewardId        String
-  reward          Reward       @relation(fields: [rewardId], references: [id])
-  
   status          RewardStatus @default(UNLOCKED)
-  shippingDetails Json?        // { name, address, size, phone }
-  
+  shippingDetails Json?
   requestedAt     DateTime     @default(now())
   processedAt     DateTime?
-  
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
+  reward          Reward       @relation(fields: [rewardId], references: [id])
+  user            User         @relation(fields: [userId], references: [id])
 
-  @@unique([userId, rewardId]) // One of each reward per user
-}
-
-enum RewardStatus {
-  UNLOCKED   // Automatically set when threshold reached (logic-side or trigger)
-  REQUESTED  // User filled the form
-  SHIPPED    // Admin marked as shipped
-  DELIVERED  // (Optional)
+  @@unique([userId, rewardId])
 }
 
 model Account {
@@ -103,31 +79,96 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
- 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
- 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
- 
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@id([provider, providerAccountId])
 }
- 
+
 model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
- 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
- 
+
 model VerificationToken {
   identifier String
   token      String
   expires    DateTime
- 
+
   @@id([identifier, token])
+}
+
+model Link {
+  id               String           @id @default(cuid())
+  shortCode        String           @unique
+  originalUrl      String
+  userId           String
+  isEnabled        Boolean          @default(true)
+  domain           String?
+  totalVisits      Int              @default(0)
+  earnings         Float            @default(0.0)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  monetizationMode MonetizationMode @default(STANDARD)
+  user             User             @relation(fields: [userId], references: [id])
+  visits           Visit[]
+
+  @@index([userId])
+}
+
+model Visit {
+  id          String   @id @default(uuid())
+  linkId      String
+  ipHash      String
+  userAgent   String?
+  country     String?
+  isMonetized Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  city        String?
+  isProxy     Boolean  @default(false)
+  region      String?
+  link        Link     @relation(fields: [linkId], references: [id])
+
+  @@index([linkId])
+  @@index([createdAt])
+}
+
+model Payout {
+  id          String       @id @default(cuid())
+  userId      String
+  amount      Float
+  status      PayoutStatus @default(PENDING)
+  method      String
+  requestedAt DateTime     @default(now())
+  processedAt DateTime?
+  adminNotes  String?
+  user        User         @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType @default(SYSTEM)
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  data      Json?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+enum RewardStatus {
+  UNLOCKED
+  REQUESTED
+  SHIPPED
+  DELIVERED
 }
 
 enum UserRole {
@@ -141,84 +182,10 @@ enum MonetizationMode {
   NSFW
 }
 
-model Link {
-  id          String    @id @default(cuid())
-  shortCode   String    @unique // e.g., "xyz123"
-  originalUrl String
-  userId      String
-  user        User      @relation(fields: [userId], references: [id])
-  
-  // Settings
-  isEnabled   Boolean   @default(true)
-  domain      String?   // For custom domain support later
-  monetizationMode MonetizationMode @default(STANDARD)
-  
-  // Aggregated Stats (for fast dashboard loading)
-  totalVisits Int       @default(0)
-  earnings    Float     @default(0.0)
-  
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  visits      Visit[]
-
-  @@index([userId])
-}
-
-model Visit {
-  id        String   @id @default(uuid())
-  linkId    String
-  link      Link     @relation(fields: [linkId], references: [id])
-  
-  ipHash    String   // Anonymized/Hashed IP for uniqueness check
-  userAgent String?
-  country   String?
-  city      String?
-  region    String?
-  isProxy   Boolean  @default(false)
-  isMonetized Boolean @default(false) // If the visit counted for earnings
-  
-  createdAt DateTime @default(now())
-
-  @@index([linkId])
-  @@index([createdAt]) // For time-based queries
-}
-
-model Payout {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  
-  amount      Float
-  status      PayoutStatus @default(PENDING)
-  method      String   // e.g., "PayPal", "Bank Transfer"
-  adminNotes  String?
-  
-  requestedAt DateTime @default(now())
-  processedAt DateTime?
-}
-
 enum PayoutStatus {
   PENDING
   PROCESSED
   REJECTED
-}
-
-model Notification {
-  id        String    @id @default(cuid())
-  
-  userId    String
-  user      User      @relation(fields: [userId], references: [id])
-  
-  type      NotificationType @default(SYSTEM)
-  title     String
-  message   String
-  isRead    Boolean   @default(false)
-  data      Json?     // For storing bonus IDs, offer IDs, etc.
-  
-  createdAt DateTime  @default(now())
-
-  @@index([userId])
 }
 
 enum NotificationType {

@@ -172,6 +172,13 @@ export default function ClientInterstitial({ shortCode, mode, cpaOfferUrl }: Pro
                                 <p className="text-xs text-red-300/70">
                                     Musisz ukończyć weryfikację wieku (oferta), aby uzyskać dostęp.
                                 </p>
+                                <Button
+                                    onClick={handlePlusClaim}
+                                    disabled={isProcessing}
+                                    className="w-full bg-red-600 hover:bg-red-500 text-white font-bold h-12 rounded-xl mt-4 shadow-[0_0_20px_rgba(220,38,38,0.4)]"
+                                >
+                                    {isProcessing ? 'WERYFIKACJA...' : 'POTWIERDZAM 18+ I WCHODZĘ'}
+                                </Button>
                             </div>
                         </div>
                     )}

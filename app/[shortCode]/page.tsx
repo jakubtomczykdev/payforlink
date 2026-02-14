@@ -41,8 +41,11 @@ export default async function Page({ params }: Props) {
 
     // 3. Determine Mode
     // Default to STANDARD if proxy, otherwise use link's setting (which defaults to STANDARD)
-    // If Global User setting is enforcing something, we might check that, but per task "per link" logic:
-    const mode = (link.monetizationMode === 'PLUS' && !isProxy) ? 'PLUS' : 'STANDARD';
+    let mode: 'STANDARD' | 'PLUS' | 'NSFW' = 'STANDARD';
+    if (!isProxy) {
+        if (link.monetizationMode === 'PLUS') mode = 'PLUS';
+        else if (link.monetizationMode === 'NSFW') mode = 'NSFW';
+    }
 
     // 4. Prepare CPA URL
     // We'll use a placeholder for click_id (sub1) for the network's internal tracking if needed,
@@ -50,8 +53,16 @@ export default async function Page({ params }: Props) {
     // sub2 = User ID
     // sub3 = Short Code
     // sub4 = "payforlink" (source identifier)
-    const cpaBase = `https://trkio.org/aff_c?offer_id=2691&aff_id=34052`;
-    const cpaOfferUrl = `${cpaBase}&sub2=${link.user.id}&sub3=${shortCode}&sub4=payforlink`;
+    // 4. Prepare CPA URL
+    let cpaBase = `https://trkio.org/aff_c?offer_id=2691&aff_id=34052`; // Default PLUS offer
+    let separator = '&';
+
+    if (mode === 'NSFW') {
+        cpaBase = `https://contrack.link/p/6257f5da6c500d58a7144be5/698d0e96ac954811b00213d1`;
+        separator = '?';
+    }
+
+    const cpaOfferUrl = `${cpaBase}${separator}sub2=${link.user.id}&sub3=${shortCode}&sub4=payforlink`;
 
     return (
         <ClientInterstitial
