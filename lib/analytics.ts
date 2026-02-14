@@ -1,14 +1,23 @@
 import { redis } from './redis';
 import { prisma } from './prisma';
 
-export async function processClick(shortCode: string, ip: string, userAgent: string, headers: Record<string, string> = {}) {
+export async function processClick(
+    shortCode: string,
+    ip: string,
+    userAgent: string,
+    headers: Record<string, string> = {},
+    options: { isUnlocked?: boolean; unlockToken?: string } = {}
+) {
     const CPM_RATE = 0.01; // 0.01 PLN per unique click
 
     // 1. Detect Proxy/VPN (Heuristic)
+    // Basic proxy detection - refined for Render/Cloud environments
     const isProxy =
-        !!headers['x-forwarded-for']?.includes(',') || // Multiple hops often means proxy
-        !!headers['via'] ||
-        !!headers['x-proxy-id'];
+        !!headers['x-proxy-id'] ||
+        !!headers['x-vpn'] ||
+        !!headers['tor-control'] ||
+        headers['user-agent']?.includes('curl') ||
+        headers['user-agent']?.includes('python');
 
     // 2. Mock GeoIP
     const country = headers['x-vercel-ip-country'] || 'PL';
@@ -71,10 +80,27 @@ export async function processClick(shortCode: string, ip: string, userAgent: str
         }
         // --- FRAUD GUARD END ---
 
+        // NEW: If the visit is locked, we typically DO NOT count earnings yet?
+        // Or we count them but they are "pending"? 
+        // For simplicity, let's process earnings as usual if unique. The lock is just for access.
+        // If the user never unlocks, we basically paid for a visit they didn't see. 
+        // Ideally, we should only pay on unlock. 
+        // But 'processClick' is designed for "click" payment. 
+        // Let's assume for now we pay on CLICK, but restrict ACCESS. 
+        // We can refine this later to pay on UNLOCK if needed. 
+        // Given the short script, let's keep paying on click for now to avoid breaking stats logic.
+
+        // Actually, if we use `isUnlocked: false`, maybe we should NOT Monetize?
+        // Let's use `options.isUnlocked` to determine `isMonetized` logic if needed.
+        // But for now, let's stick to the plan: Pay on click, lock access.
+
+        const visitId = crypto.randomUUID();
+
         const queries: any[] = [
             // 1. Always Log the Visit (Raw Traffic)
             prisma.visit.create({
                 data: {
+                    id: visitId,
                     linkId: link.id,
                     ipHash: ip,
                     userAgent,
@@ -82,7 +108,9 @@ export async function processClick(shortCode: string, ip: string, userAgent: str
                     isProxy,
                     country,
                     city,
-                    region
+                    region,
+                    isUnlocked: options.isUnlocked ?? true,
+                    unlockToken: options.unlockToken
                 }
             }),
             // 2. Increment Raw Visit Count
@@ -114,7 +142,7 @@ export async function processClick(shortCode: string, ip: string, userAgent: str
         }
 
         await prisma.$transaction(queries);
-        return { unique: isUnique, earnings: canEarn ? CPM_RATE : 0 };
+        return { unique: isUnique, earnings: canEarn ? CPM_RATE : 0, visitId };
 
     } catch (error) {
         console.error("Failed to process click:", error);

@@ -13,13 +13,27 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get('sub2');
-    const shortCode = searchParams.get('sub3');
+
+    // 1. Extract Parameters
+    // New Plan: sub1=userId, sub2=shortCode, sub3=token
+    const p_userId = searchParams.get('userId') || searchParams.get('sub1');
+    const p_shortCode = searchParams.get('shortCode') || searchParams.get('sub2');
+    const p_visitToken = searchParams.get('visitToken') || searchParams.get('sub3');
+
+    // Legacy Fallback (sub2=userId, sub3=shortCode, sub5=token)
+    const legacy_userId = searchParams.get('sub2');
+    const legacy_shortCode = searchParams.get('sub3');
+    const legacy_visitToken = searchParams.get('sub5');
+
+    const userId = p_userId || legacy_userId;
+    const shortCode = p_shortCode || legacy_shortCode;
+    const visitToken = p_visitToken || legacy_visitToken;
+
     const payout = parseFloat(searchParams.get('payout') || '0');
     const currency = searchParams.get('currency') || 'PLN';
-    const status = searchParams.get('status'); // approved, rejected, etc. (Check MyLead docs, usually '1' or 'approved')
+    const status = searchParams.get('status');
 
-    // Basic Validation
+    // 2. Validate
     if (!userId || !shortCode || payout <= 0) {
         return NextResponse.json({ error: 'Invalid parameters', params: Object.fromEntries(searchParams) }, { status: 400 });
     }
@@ -32,8 +46,8 @@ export async function GET(request: NextRequest) {
         const link = await prisma.link.findUnique({ where: { shortCode } });
         if (!link) return NextResponse.json({ error: 'Link not found' }, { status: 404 });
 
-        // 2. Update Balances (Atomic Transaction)
-        await prisma.$transaction([
+        // Build transaction queries
+        const queries: any[] = [
             // Update User Wallet
             prisma.user.update({
                 where: { id: userId },
@@ -53,13 +67,26 @@ export async function GET(request: NextRequest) {
             prisma.notification.create({
                 data: {
                     userId,
-                    type: 'BONUS', // Or a new type 'EARNING'
+                    type: 'BONUS',
                     title: 'Nowe Środki (CPA)',
                     message: `Otrzymałeś ${payout} ${currency} z linku /${shortCode} (Zadanie wykonane).`,
                     isRead: false
                 }
             })
-        ]);
+        ];
+
+        // NEW: If we have a visitToken, unlock the visit!
+        if (visitToken) {
+            queries.push(
+                prisma.visit.update({
+                    where: { unlockToken: visitToken },
+                    data: { isUnlocked: true }
+                })
+            );
+        }
+
+        // Execute Transaction
+        await prisma.$transaction(queries);
 
         return NextResponse.json({ success: true, message: 'Postback processed' });
 

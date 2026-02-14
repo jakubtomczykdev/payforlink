@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { verifyAndRedirect, getDestinationUrl } from '@/app/actions';
+import { startLockedVisit, verifyAndRedirect, getDestinationUrl } from '@/app/actions';
 
 interface Props {
     shortCode: string;
@@ -14,33 +14,24 @@ export default function ClientInterstitial({ shortCode, mode, cpaOfferUrl }: Pro
     const [timeLeft, setTimeLeft] = useState(10);
     const [canProceed, setCanProceed] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [showSkip, setShowSkip] = useState(false);
-    const [skipTimeLeft, setSkipTimeLeft] = useState(5);
-    const [skipActive, setSkipActive] = useState(false);
+    const [isLocked, setIsLocked] = useState(false); // For NSFW waiting state
 
+    // Timer Logic
     useEffect(() => {
-        const timer = setInterval(() => {
-            setTimeLeft((prev) => {
-                if (prev <= 1) {
-                    clearInterval(timer);
-                    setCanProceed(true);
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-
-        return () => clearInterval(timer);
-    }, []);
-
-    useEffect(() => {
-        if (skipActive && skipTimeLeft > 0) {
+        if (mode === 'STANDARD') { // Only run timer for STANDARD
             const timer = setInterval(() => {
-                setSkipTimeLeft((prev) => prev - 1);
+                setTimeLeft((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(timer);
+                        setCanProceed(true);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
             }, 1000);
             return () => clearInterval(timer);
         }
-    }, [skipActive, skipTimeLeft]);
+    }, [mode]);
 
     const handleStandardProceed = async () => {
         setIsProcessing(true);
@@ -48,45 +39,77 @@ export default function ClientInterstitial({ shortCode, mode, cpaOfferUrl }: Pro
     };
 
     const handlePlusClaim = async () => {
+        // Obsolete? PLUS usually works via script injection, but if we have a button:
+        // Reuse similar logic or keep existing
         setIsProcessing(true);
-        // Double Tab Logic
-        // 1. Get final URL via server action (processes click/earnings)
         const finalUrl = await getDestinationUrl(shortCode);
-
         if (finalUrl) {
-            // 2. Open Final URL in New Tab
             window.open(finalUrl, '_blank');
-
-            // 3. Redirect Current Tab to CPA Offer
             window.location.href = cpaOfferUrl;
         } else {
-            // Error fallback
             alert("Error retrieving link. Please try again.");
             setIsProcessing(false);
         }
     };
 
-    const handleSkip = () => {
-        setShowSkip(true);
-        setSkipActive(true);
+    const handleNSFWClaim = async () => {
+        setIsProcessing(true);
+
+        // 1. Create Locked Visit
+        const result = await startLockedVisit(shortCode);
+        if (!result.success || !result.unlockToken) {
+            alert("Błąd inicjalizacji. Spróbuj ponownie.");
+            setIsProcessing(false);
+            return;
+        }
+
+        const token = result.unlockToken;
+
+        // 2. Prepare Offer URL with Token (sub3)
+        // Check if cpaOfferUrl already has query params
+        const separator = cpaOfferUrl.includes('?') ? '&' : '?';
+        const offerUrlWithToken = `${cpaOfferUrl}${separator}sub3=${token}`;
+
+        // 3. Open Offer in New Tab
+        window.open(offerUrlWithToken, '_blank');
+
+        // 4. Show "Waiting" State & Start Polling
+        setIsLocked(true);
+        setIsProcessing(false); // Enable polling UI
+
+        // Polling Loop
+        const pollInterval = setInterval(async () => {
+            try {
+                const res = await fetch(`/api/visit/status?token=${token}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.unlocked) {
+                        clearInterval(pollInterval);
+                        // 5. Redirect to Final URL on Unlock
+                        // We need to fetch the final URL again or reuse if we had it (we don't for security, fetching now)
+                        // Actually, we can just call verifyAndRedirect or getDestinationUrl.
+                        // Since verifyAndRedirect redirects server-side, it might not work well in interval.
+                        // Better to fetch URL and redirect client-side.
+                        const finalUrl = await getDestinationUrl(shortCode);
+                        if (finalUrl) {
+                            window.location.href = finalUrl;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Polling error", e);
+            }
+        }, 5000); // Check every 5s
     };
+
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-[#050505] text-white p-4 font-sans overflow-hidden">
-            {/* MyLead Script Injection for PLUS mode */}
+            {/* MyLead Script Injection for PLUS mode only */}
             {mode === 'PLUS' && (
                 <>
                     <script dangerouslySetInnerHTML={{ __html: `const adblockRedirect = "https://bestlocker.eu/adblock"` }} />
                     <script type="text/javascript" id="cpljs-dd9f28ce-0921-11f1-aa72-129a1c289511" src="https://bestlocker.eu/iframeLoader/dd9f28ce-0921-11f1-aa72-129a1c289511"></script>
-                </>
-            )}
-
-            {/* MyLead Script Injection for NSFW mode */}
-            {mode === 'NSFW' && (
-                <>
-                    {/* Placeholder for NSFW Script - Asking user for details */}
-                    {/* <script dangerouslySetInnerHTML={{ __html: `const adblockRedirect = "..."` }} /> */}
-                    {/* <script type="text/javascript" src="..."></script> */}
                 </>
             )}
 
@@ -109,7 +132,9 @@ export default function ClientInterstitial({ shortCode, mode, cpaOfferUrl }: Pro
                         {mode === 'PLUS' ? 'Zadanie Specjalne' : mode === 'NSFW' ? 'Treści 18+ (NSFW)' : 'Utrzymaj Pozycję'}
                     </h1>
                     <p className="text-gray-400 text-sm">
-                        {mode === 'PLUS' ? 'Wykonaj zadanie aby odblokować link...' : mode === 'NSFW' ? 'Potwierdź pełnoletność aby przejść dalej...' : 'Nawiązywanie bezpiecznego połączenia...'}
+                        {isLocked
+                            ? 'Oczekiwanie na weryfikację wieku...'
+                            : mode === 'PLUS' ? 'Wykonaj zadanie aby odblokować link...' : mode === 'NSFW' ? 'Potwierdź pełnoletność aby przejść dalej...' : 'Nawiązywanie bezpiecznego połączenia...'}
                     </p>
                 </div>
 
@@ -160,7 +185,7 @@ export default function ClientInterstitial({ shortCode, mode, cpaOfferUrl }: Pro
                         </div>
                     )}
 
-                    {mode === 'NSFW' && (
+                    {mode === 'NSFW' && !isLocked && (
                         <div className="w-full animate-in fade-in zoom-in duration-500">
                             <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg space-y-4">
                                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-500/20 text-red-500 mb-2">
@@ -173,13 +198,28 @@ export default function ClientInterstitial({ shortCode, mode, cpaOfferUrl }: Pro
                                     Musisz ukończyć weryfikację wieku (oferta), aby uzyskać dostęp.
                                 </p>
                                 <Button
-                                    onClick={handlePlusClaim}
+                                    onClick={handleNSFWClaim}
                                     disabled={isProcessing}
                                     className="w-full bg-red-600 hover:bg-red-500 text-white font-bold h-12 rounded-xl mt-4 shadow-[0_0_20px_rgba(220,38,38,0.4)]"
                                 >
                                     {isProcessing ? 'WERYFIKACJA...' : 'POTWIERDZAM 18+ I WCHODZĘ'}
                                 </Button>
                             </div>
+                        </div>
+                    )}
+
+                    {mode === 'NSFW' && isLocked && (
+                        <div className="w-full animate-in fade-in zoom-in duration-500 flex flex-col items-center">
+                            <div className="relative w-16 h-16 mb-4">
+                                <div className="absolute inset-0 rounded-full border-4 border-red-900/30" />
+                                <div className="absolute inset-0 rounded-full border-4 border-red-500 border-t-transparent animate-spin" />
+                            </div>
+                            <p className="text-sm text-red-400 font-bold animate-pulse">
+                                OCZEKIWANIE NA WERYFIKACJĘ...
+                            </p>
+                            <p className="text-xs text-gray-500 mt-2 max-w-[200px]">
+                                Nie zamykaj tej karty. Po potwierdzeniu pełnoletności (wykonaniu oferty), zostaniesz przekierowany automatycznie.
+                            </p>
                         </div>
                     )}
 

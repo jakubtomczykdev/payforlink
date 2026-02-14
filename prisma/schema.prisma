@@ -132,10 +132,13 @@ model Visit {
   city        String?
   isProxy     Boolean  @default(false)
   region      String?
+  isUnlocked  Boolean  @default(true)
+  unlockToken String?  @unique
   link        Link     @relation(fields: [linkId], references: [id])
 
   @@index([linkId])
   @@index([createdAt])
+  @@index([unlockToken])
 }
 
 model Payout {

@@ -62,7 +62,7 @@ export default async function Page({ params }: Props) {
         separator = '?';
     }
 
-    const cpaOfferUrl = `${cpaBase}${separator}sub2=${link.user.id}&sub3=${shortCode}&sub4=payforlink`;
+    const cpaOfferUrl = `${cpaBase}${separator}sub1=${link.user.id}&sub2=${shortCode}`;
 
     return (
         <ClientInterstitial
