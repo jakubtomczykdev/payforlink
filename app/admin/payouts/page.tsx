@@ -115,11 +115,12 @@ export default async function AdminPayoutsPage() {
                                             <span className="text-xs font-mono text-emerald-400 break-all select-all">{payout.user.usdtAddress}</span>
                                         </div>
                                     )}
-                                    <div className="mt-4 p-3 bg-black/20 rounded-lg border border-white/5 flex items-center gap-2">
-                                        <CornerDownRight size={14} className="text-zinc-500" />
-                                        <span className="text-[10px] text-zinc-500 uppercase font-bold">IBAN:</span>
-                                        <span className="text-xs font-mono text-blue-400 break-all select-all">{payout.user.bankAccount}</span>
-                                    </div>
+                                    {payout.user.bankAccount && (
+                                        <div className="mt-4 p-3 bg-black/20 rounded-lg border border-white/5 flex items-center gap-2">
+                                            <CornerDownRight size={14} className="text-zinc-500" />
+                                            <span className="text-[10px] text-zinc-500 uppercase font-bold">IBAN:</span>
+                                            <span className="text-xs font-mono text-blue-400 break-all select-all">{payout.user.bankAccount}</span>
+                                        </div>
                                     )}
                                     {payout.user.blikNumber && payout.method === 'BLIK' && (
                                         <div className="mt-4 p-3 bg-black/20 rounded-lg border border-white/5 flex items-center gap-2">
