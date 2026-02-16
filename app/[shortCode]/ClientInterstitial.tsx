@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { startLockedVisit, verifyAndRedirect, getDestinationUrl } from '@/app/actions';
+import { setAdultVerifiedCookie } from '@/app/actions/cookies';
 import AdBanner from '@/components/ads/AdBanner'; // Import AdBanner
 
 interface Props {
@@ -91,6 +92,9 @@ export default function ClientInterstitial({ shortCode, mode, cpaOfferUrl }: Pro
                         clearInterval(pollInterval);
 
                         setIsUnlockedSuccess(true);
+
+                        // Set cookie to remember 18+ verification
+                        await setAdultVerifiedCookie();
 
                         // 5. Try Auto-Redirect
                         const finalUrl = await getDestinationUrl(shortCode);

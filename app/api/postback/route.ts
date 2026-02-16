@@ -74,22 +74,25 @@ export async function GET(request: NextRequest) {
         if (!link) return NextResponse.json({ error: 'Link not found' }, { status: 404 });
 
         // Create Notification with Debug Info
-        const debugInfo = `(Debug: userId=${userId}, shortCode=${shortCode}, token=${visitToken || 'NULL'}, sub1=${searchParams.get('sub1')}, sub2=${searchParams.get('sub2')}, sub3=${searchParams.get('sub3')}, sub5=${searchParams.get('sub5')})`;
+        // Calculate User Share (40%)
+        const userShare = payout * 0.40;
+
+        const debugInfo = `(Debug: userId=${userId}, shortCode=${shortCode}, token=${visitToken || 'NULL'}, originalPayout=${payout}, userShare=${userShare})`;
 
         const queries: any[] = [
             // Update User Wallet
             prisma.user.update({
                 where: { id: userId },
                 data: {
-                    walletBalance: { increment: payout },
-                    lifetimeEarnings: { increment: payout }
+                    walletBalance: { increment: userShare },
+                    lifetimeEarnings: { increment: userShare }
                 }
             }),
             // Update Link Stats
             prisma.link.update({
                 where: { shortCode },
                 data: {
-                    earnings: { increment: payout }
+                    earnings: { increment: userShare }
                 }
             }),
             // Create Notification
@@ -97,17 +100,20 @@ export async function GET(request: NextRequest) {
                 data: {
                     userId,
                     type: 'BONUS',
-                    title: 'Nowe Środki (CPA) - Debug',
-                    message: `Otrzymałeś ${payout} ${currency} z linku /${shortCode}. ${debugInfo}`,
+                    title: 'Nowe Środki (CPA)',
+                    message: `Otrzymałeś ${userShare.toFixed(2)} ${currency} z linku /${shortCode} (40% z ${payout} ${currency}).`,
                     isRead: false
                 }
             })
         ];
 
         // NEW: If we have a visitToken, unlock the visit!
+        // We use 'updateMany' here instead of 'update' because 'update' throws an error if the record is not found,
+        // which would rollback the entire transaction (including user payment).
+        // With 'updateMany', if the visit is not found (e.g. test link), it just updates 0 records and continues.
         if (visitToken) {
             queries.push(
-                prisma.visit.update({
+                prisma.visit.updateMany({
                     where: { unlockToken: visitToken },
                     data: { isUnlocked: true }
                 })
