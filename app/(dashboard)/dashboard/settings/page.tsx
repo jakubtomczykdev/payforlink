@@ -22,10 +22,11 @@ export default async function SettingsPage() {
 
         const bankAccount = formData.get('bankAccount') as string;
         const usdtAddress = formData.get('usdtAddress') as string;
+        const blikNumber = formData.get('blikNumber') as string;
 
         await prisma.user.update({
             where: { email: session.user.email },
-            data: { bankAccount, usdtAddress }
+            data: { bankAccount, usdtAddress, blikNumber }
         });
 
         revalidatePath('/dashboard/settings');
@@ -58,6 +59,16 @@ export default async function SettingsPage() {
                             name="usdtAddress"
                             defaultValue={user.usdtAddress || ''}
                             placeholder="T..."
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500/50"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-400">Numer BLIK (Telefon)</label>
+                        <input
+                            name="blikNumber"
+                            defaultValue={user.blikNumber || ''}
+                            placeholder="123 456 789"
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500/50"
                         />
                     </div>

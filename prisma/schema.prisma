@@ -19,6 +19,7 @@ model User {
   bankAccount           String?
   preferredPayoutMethod String?
   usdtAddress           String?
+  blikNumber            String?
   isBanned              Boolean          @default(false)
   banReason             String?
   emailVerified         DateTime?

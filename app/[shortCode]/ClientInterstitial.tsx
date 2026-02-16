@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { startLockedVisit, verifyAndRedirect, getDestinationUrl } from '@/app/actions';
+import AdBanner from '@/components/ads/AdBanner'; // Import AdBanner
 
 interface Props {
     shortCode: string;
@@ -121,9 +122,13 @@ export default function ClientInterstitial({ shortCode, mode, cpaOfferUrl }: Pro
                 <div className={`absolute bottom-[-20%] right-[-20%] w-[50%] h-[50%] rounded-full blur-[120px] ${mode === 'NSFW' ? 'bg-orange-500/10' : 'bg-emerald-500/10'}`} />
             </div>
 
-            {/* Top Ad Placeholder */}
-            <div className="w-full max-w-4xl h-32 bg-gray-900/50 rounded-lg border border-gray-800 flex items-center justify-center mb-8 relative z-10 backdrop-blur-sm">
-                <span className="text-gray-600 font-mono text-xs tracking-widest">REKLAMA</span>
+            {/* Top Ad Banner (320x50) */}
+            <div className="mb-8 relative z-10 flex justify-center w-full">
+                <AdBanner
+                    dataKey="12f37b374b615244ad86fa56ddd1be65"
+                    width={320}
+                    height={50}
+                />
             </div>
 
             <div className="bg-[#0A0A0A] border border-gray-800/50 rounded-2xl p-8 max-w-md w-full shadow-[0_0_50px_-10px_rgba(0,0,0,0.5)] text-center space-y-8 relative z-10 backdrop-blur-xl">
@@ -262,9 +267,13 @@ export default function ClientInterstitial({ shortCode, mode, cpaOfferUrl }: Pro
                 </div>
             </div>
 
-            {/* Bottom Ad Placeholder */}
-            <div className="w-full max-w-lg h-60 bg-gray-900/50 rounded-lg border border-gray-800 flex items-center justify-center mt-8 relative z-10 backdrop-blur-sm">
-                <span className="text-gray-600 font-mono text-xs tracking-widest">REKLAMA</span>
+            {/* Bottom Ad Banner (300x250) */}
+            <div className="mt-8 relative z-10 flex justify-center w-full">
+                <AdBanner
+                    dataKey="0457e5bf142286df7a15f7f91c1f91e5"
+                    width={300}
+                    height={250}
+                />
             </div>
         </div>
     );

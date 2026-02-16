@@ -8,7 +8,7 @@ export async function processClick(
     headers: Record<string, string> = {},
     options: { isUnlocked?: boolean; unlockToken?: string } = {}
 ) {
-    const CPM_RATE = 0.01; // 0.01 PLN per unique click
+    const CPM_RATE = 0.005; // 0.005 PLN per unique click
 
     // 1. Detect Proxy/VPN (Heuristic)
     // Basic proxy detection - refined for Render/Cloud environments

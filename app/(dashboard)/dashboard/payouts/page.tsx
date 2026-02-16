@@ -44,6 +44,7 @@ export default async function PayoutsPage() {
                             <select name="method" className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500/50">
                                 <option value="BANK">Przelew Bankowy {user.bankAccount ? `(Kończy się na ...${user.bankAccount.slice(-4)})` : '(Nie ustawiono)'}</option>
                                 <option value="USDT">USDT (TRC20) {user.usdtAddress ? `(Kończy się na ...${user.usdtAddress.slice(-4)})` : '(Nie ustawiono)'}</option>
+                                <option value="BLIK">BLIK {user.blikNumber ? `(${user.blikNumber})` : '(Nie ustawiono)'}</option>
                             </select>
                         </div>
 

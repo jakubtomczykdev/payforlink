@@ -34,6 +34,9 @@ export async function requestPayout(formData: FormData) {
     if (method === 'USDT' && !user.usdtAddress) {
         return { error: 'Please set your USDT Address in Settings.' };
     }
+    if (method === 'BLIK' && !user.blikNumber) {
+        return { error: 'Please set your BLIK Number in Settings.' };
+    }
 
     try {
         await prisma.$transaction([

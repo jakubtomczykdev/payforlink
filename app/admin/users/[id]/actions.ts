@@ -49,7 +49,10 @@ export async function adjustBalance(userId: string, formData: FormData) {
     await prisma.$transaction([
         prisma.user.update({
             where: { id: userId },
-            data: { walletBalance: { increment: amount } }
+            data: {
+                walletBalance: { increment: amount },
+                lifetimeEarnings: amount > 0 ? { increment: amount } : undefined
+            }
         }),
         // Create notification
         prisma.notification.create({

@@ -12,7 +12,9 @@ import { prisma } from '@/lib/prisma';
 // - status: Conversion status (optional, usually "1" or "approved")
 
 export async function GET(request: NextRequest) {
+    console.log(`[POSTBACK] Received: ${request.url}`);
     const searchParams = request.nextUrl.searchParams;
+    console.log(`[POSTBACK] Params: ${JSON.stringify(Object.fromEntries(searchParams))}`);
 
     // 1. Extract Parameters
     // New Plan: sub1=userId, sub2=shortCode, sub3=token
@@ -29,12 +31,18 @@ export async function GET(request: NextRequest) {
     const shortCode = p_shortCode || legacy_shortCode;
     const visitToken = p_visitToken || legacy_visitToken;
 
-    const payout = parseFloat(searchParams.get('payout') || '0');
+    // Fix payout comma issue (e.g. "2,50" -> "2.50")
+    let rawPayout = searchParams.get('payout') || '0';
+    rawPayout = rawPayout.replace(',', '.');
+    const payout = parseFloat(rawPayout);
+
     const currency = searchParams.get('currency') || 'PLN';
     const status = searchParams.get('status');
 
     // 2. Validate
     if (!userId || !shortCode || payout <= 0) {
+        console.error(`[POSTBACK] Validation Failed: userId=${userId}, shortCode=${shortCode}, payout=${payout}`);
+
         // DEBUG: Try to notify the user if we at least have a userId
         if (userId) {
             try {
