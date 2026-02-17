@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
                     userId,
                     type: 'BONUS',
                     title: 'Nowe Środki (CPA)',
-                    message: `Otrzymałeś ${userShare.toFixed(2)} ${currency} z linku /${shortCode} (40% z ${payout} ${currency}).`,
+                    message: `Otrzymałeś ${userShare.toFixed(2)} ${currency} z linku /${shortCode}.`,
                     isRead: false
                 }
             })

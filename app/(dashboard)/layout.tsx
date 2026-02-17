@@ -7,6 +7,7 @@ import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 
 import { NotificationBell } from "@/components/dashboard/NotificationBell";
+import { Logo } from "@/components/ui/Logo";
 
 export default function DashboardLayout({
     children,
@@ -50,12 +51,9 @@ export default function DashboardLayout({
                 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
             `}>
                 <div className="mb-8 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 bg-emerald-600 rounded flex items-center justify-center font-bold text-white shadow-lg shadow-emerald-500/20">
-                            P
-                        </div>
-                        <span className="text-xl font-bold tracking-tight text-white">PayForLink</span>
-                    </div>
+                    <Link href="/" className="flex items-center gap-2">
+                        <Logo className="h-8 w-auto" />
+                    </Link>
                     <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden text-gray-400 hover:text-white">
                         <X size={24} />
                     </button>

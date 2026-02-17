@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Link2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Logo } from "@/components/ui/Logo";
 
 export const Navbar = () => {
     const [scrolled, setScrolled] = useState(false);
@@ -18,15 +19,12 @@ export const Navbar = () => {
 
     return (
         <nav
-            className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${scrolled ? "bg-[#0B0B0B]/80 backdrop-blur-md border-b border-white/5 py-4" : "bg-transparent py-6"
+            className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${scrolled ? "bg-[#0B0B0B]/80 backdrop-blur-md border-b border-white/5 py-3" : "bg-transparent py-4"
                 }`}
         >
             <div className="container mx-auto px-4 flex justify-between items-center">
                 <Link href="/" className="flex items-center gap-2 group">
-                    <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 group-hover:bg-emerald-500/20 transition-colors">
-                        <Link2 className="w-5 h-5 text-emerald-500" />
-                    </div>
-                    <span className="font-bold text-xl tracking-tight text-white">PayForLink</span>
+                    <Logo className="h-10 w-auto" />
                 </Link>
 
                 <div className="hidden md:flex items-center gap-8">

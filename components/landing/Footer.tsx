@@ -2,18 +2,17 @@
 
 import Link from "next/link";
 import { Github, Twitter, Linkedin, Link2 } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 
 export const Footer = () => {
     return (
         <footer className="bg-[#0B0B0B] border-t border-white/5 pt-16 pb-8">
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+                    {/* ... inside Footer ... */}
                     <div className="space-y-4">
                         <div className="flex items-center gap-2">
-                            <div className="p-1 rounded bg-emerald-500/10 border border-emerald-500/20">
-                                <Link2 className="w-4 h-4 text-emerald-500" />
-                            </div>
-                            <span className="font-bold text-lg text-white">PayForLink</span>
+                            <Logo className="h-10 w-auto" />
                         </div>
                         <p className="text-slate-400 text-sm leading-relaxed">
                             Usługa skracania linków premium zaprojektowana dla maksymalnej konwersji i generowania przychodów.
